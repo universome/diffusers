@@ -415,8 +415,8 @@ class CogVideoXDownBlock3D(nn.Module):
             if self.training and self.gradient_checkpointing:
 
                 def create_custom_forward(module):
-                    def create_forward(*inputs):
-                        return module(*inputs)
+                    def create_forward(*args, **kwargs):
+                        return module(*args, **kwargs)
 
                     return create_forward
 
@@ -426,6 +426,7 @@ class CogVideoXDownBlock3D(nn.Module):
                     temb,
                     zq,
                     conv_cache=conv_cache.get(conv_cache_key),
+                    use_reentrant=False,
                 )
             else:
                 hidden_states, new_conv_cache[conv_cache_key] = resnet(
@@ -517,13 +518,13 @@ class CogVideoXMidBlock3D(nn.Module):
             if self.training and self.gradient_checkpointing:
 
                 def create_custom_forward(module):
-                    def create_forward(*inputs):
-                        return module(*inputs)
+                    def create_forward(*args, **kwargs):
+                        return module(*args, **kwargs)
 
                     return create_forward
 
                 hidden_states, new_conv_cache[conv_cache_key] = torch.utils.checkpoint.checkpoint(
-                    create_custom_forward(resnet), hidden_states, temb, zq, conv_cache=conv_cache.get(conv_cache_key)
+                    create_custom_forward(resnet), hidden_states, temb, zq, conv_cache=conv_cache.get(conv_cache_key), use_reentrant=False,
                 )
             else:
                 hidden_states, new_conv_cache[conv_cache_key] = resnet(
@@ -631,8 +632,8 @@ class CogVideoXUpBlock3D(nn.Module):
             if self.training and self.gradient_checkpointing:
 
                 def create_custom_forward(module):
-                    def create_forward(*inputs):
-                        return module(*inputs)
+                    def create_forward(*args, **kwargs):
+                        return module(*args, **kwargs)
 
                     return create_forward
 
@@ -642,6 +643,7 @@ class CogVideoXUpBlock3D(nn.Module):
                     temb,
                     zq,
                     conv_cache=conv_cache.get(conv_cache_key),
+                    use_reentrant=False,
                 )
             else:
                 hidden_states, new_conv_cache[conv_cache_key] = resnet(
@@ -768,10 +770,10 @@ class CogVideoXEncoder3D(nn.Module):
         if self.training and self.gradient_checkpointing:
 
             def create_custom_forward(module):
-                def custom_forward(*inputs):
-                    return module(*inputs)
+                def create_forward(*args, **kwargs):
+                    return module(*args, **kwargs)
 
-                return custom_forward
+                return create_forward
 
             # 1. Down
             for i, down_block in enumerate(self.down_blocks):
@@ -782,6 +784,7 @@ class CogVideoXEncoder3D(nn.Module):
                     temb,
                     None,
                     conv_cache=conv_cache.get(conv_cache_key),
+                    use_reentrant=False,
                 )
 
             # 2. Mid
@@ -791,6 +794,7 @@ class CogVideoXEncoder3D(nn.Module):
                 temb,
                 None,
                 conv_cache=conv_cache.get("mid_block"),
+                use_reentrant=False,
             )
         else:
             # 1. Down
@@ -934,10 +938,10 @@ class CogVideoXDecoder3D(nn.Module):
         if self.training and self.gradient_checkpointing:
 
             def create_custom_forward(module):
-                def custom_forward(*inputs):
-                    return module(*inputs)
+                def create_forward(*args, **kwargs):
+                    return module(*args, **kwargs)
 
-                return custom_forward
+                return create_forward
 
             # 1. Mid
             hidden_states, new_conv_cache["mid_block"] = torch.utils.checkpoint.checkpoint(
@@ -946,6 +950,7 @@ class CogVideoXDecoder3D(nn.Module):
                 temb,
                 sample,
                 conv_cache=conv_cache.get("mid_block"),
+                use_reentrant=False,
             )
 
             # 2. Up
@@ -957,6 +962,7 @@ class CogVideoXDecoder3D(nn.Module):
                     temb,
                     sample,
                     conv_cache=conv_cache.get(conv_cache_key),
+                    use_reentrant=False,
                 )
         else:
             # 1. Mid
