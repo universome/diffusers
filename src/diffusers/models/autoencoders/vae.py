@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import itertools
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
@@ -286,7 +288,7 @@ class Decoder(nn.Module):
 
         sample = self.conv_in(sample)
 
-        upscale_dtype = next(iter(self.up_blocks.parameters())).dtype
+        upscale_dtype = next(itertools.chain(self.up_blocks.parameters(), self.up_blocks.buffers())).dtype
         if torch.is_grad_enabled() and self.gradient_checkpointing:
             # middle
             sample = self._gradient_checkpointing_func(self.mid_block, sample, latent_embeds)
@@ -511,7 +513,7 @@ class MaskConditionDecoder(nn.Module):
         sample = z
         sample = self.conv_in(sample)
 
-        upscale_dtype = next(iter(self.up_blocks.parameters())).dtype
+        upscale_dtype = next(itertools.chain(self.up_blocks.parameters(), self.up_blocks.buffers())).dtype
         if torch.is_grad_enabled() and self.gradient_checkpointing:
             # middle
             sample = self._gradient_checkpointing_func(self.mid_block, sample, latent_embeds)

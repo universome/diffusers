@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import math
+import itertools
 from typing import Optional, Tuple, Union
 
 import torch
@@ -637,7 +638,7 @@ class AllegroDecoder3D(nn.Module):
         sample = self.temp_conv_in(sample)
         sample = sample + residual
 
-        upscale_dtype = next(iter(self.up_blocks.parameters())).dtype
+        upscale_dtype = next(itertools.chain(self.up_blocks.parameters(), self.up_blocks.buffers())).dtype
 
         if torch.is_grad_enabled() and self.gradient_checkpointing:
             # Mid block
